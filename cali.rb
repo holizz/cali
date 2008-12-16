@@ -18,6 +18,9 @@ require 'date'
 require 'ncurses'
 
 class Cali
+  def initialize
+    @days = {}
+  end
   def run
     begin
       @today = Date.today
@@ -31,19 +34,21 @@ class Cali
     end
   end
   def mainloop
+    displaycal
     while true
-      displaycal
       case Ncurses.getch
       when 'q'[0]
         break
+      when 12 # C-l
+        displaycal
       when 'l'[0], Ncurses::KEY_RIGHT, 6 # C-f
-        @today += 1
+        tomorrow
       when 'h'[0], Ncurses::KEY_LEFT, 2 # C-b
-        @today -= 1
+        yesterday
       when 'j'[0], Ncurses::KEY_DOWN, 14 # C-n
-        @today += 7
+        nextweek
       when 'k'[0], Ncurses::KEY_UP, 16 # C-p
-        @today -= 7
+        lastweek
       when 'w'[0], Ncurses::KEY_NPAGE
         nextmonth
       when 'b'[0], Ncurses::KEY_PPAGE
@@ -77,6 +82,8 @@ class Cali
         Ncurses.printw("   ")
         Ncurses.printw("\n") if after_month
       else
+        @days[counter.day] = [Ncurses.getcurx(Ncurses.stdscr),
+                              Ncurses.getcury(Ncurses.stdscr)]
         if counter == @today
           x,y = Ncurses.getcurx(Ncurses.stdscr),Ncurses.getcury(Ncurses.stdscr)
         end
@@ -92,12 +99,43 @@ class Cali
     end
     Ncurses.move(y,x+1)
   end
+  def movecursor(old)
+    a = @days[old.day]
+    Ncurses.mvprintw(a[1],a[0],"%2d" % old.day)
+    Ncurses.attron(Ncurses::A_REVERSE)
+    a = @days[@today.day]
+    Ncurses.mvprintw(a[1],a[0],"%2d" % @today.day)
+    Ncurses.attroff(Ncurses::A_REVERSE)
+    Ncurses.move(a[1],a[0]+1)
+  end
+  def update(&block)
+    oldtoday = @today.dup
+    yield
+    if oldtoday.month == @today.month and oldtoday.year == @today.year
+      movecursor(oldtoday)
+    else
+      displaycal
+    end
+  end
+  def tomorrow;
+    update { @today += 1 }
+  end
+  def yesterday
+    update { @today -= 1 }
+  end
+  def nextweek
+    update { @today += 7 }
+  end
+  def lastweek
+    update { @today -= 7 }
+  end
   def nextmonth
     oldtoday = @today.dup
     @today += 4*7
     if @today.month == oldtoday.month
       @today += 7
     end
+    displaycal
   end
   def prevmonth
     oldtoday = @today.dup
@@ -105,6 +143,7 @@ class Cali
     if @today.month == oldtoday.month
       @today -= 7
     end
+    displaycal
   end
   def nextyear
     12.times { nextmonth }
