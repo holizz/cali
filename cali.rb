@@ -19,11 +19,11 @@ require 'ncurses'
 
 class Cali
   def initialize
+    @today = Date.today
     @days = {}
   end
   def run
     begin
-      @today = Date.today
       Ncurses.initscr
       Ncurses.cbreak
       Ncurses.noecho
