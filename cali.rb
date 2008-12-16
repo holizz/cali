@@ -34,24 +34,24 @@ class Cali
     while true
       displaycal
       case Ncurses.getch
-        # Exit
-      when 'q'[0]: break
-        # Directions
-      when 'l'[0]:               @today += 1
-      when Ncurses::KEY_RIGHT:   @today += 1
-      when 'h'[0]:               @today -= 1
-      when Ncurses::KEY_LEFT:    @today -= 1
-      when 'j'[0]:               @today += 7
-      when Ncurses::KEY_DOWN:    @today += 7
-      when 'k'[0]:               @today -= 7
-      when Ncurses::KEY_UP:      @today -= 7
-        # Extra movement
-      when 'w'[0]:               nextmonth
-      when Ncurses::KEY_NPAGE:   nextmonth
-      when 'b'[0]:               prevmonth
-      when Ncurses::KEY_PPAGE:   prevmonth
-      when '}'[0]:               nextyear
-      when '{'[0]:               prevyear
+      when 'q'[0]
+        break
+      when 'l'[0], Ncurses::KEY_RIGHT, 6 # C-f
+        @today += 1
+      when 'h'[0], Ncurses::KEY_LEFT, 2 # C-b
+        @today -= 1
+      when 'j'[0], Ncurses::KEY_DOWN, 14 # C-n
+        @today += 7
+      when 'k'[0], Ncurses::KEY_UP, 16 # C-p
+        @today -= 7
+      when 'w'[0], Ncurses::KEY_NPAGE
+        nextmonth
+      when 'b'[0], Ncurses::KEY_PPAGE
+        prevmonth
+      when '}'[0]
+        nextyear
+      when '{'[0]
+        prevyear
       end
     end
   end
