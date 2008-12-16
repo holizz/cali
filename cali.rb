@@ -46,13 +46,12 @@ class Cali
       when 'k'[0]:               @today -= 7
       when Ncurses::KEY_UP:      @today -= 7
         # Extra movement
-        #TODO: is this the best way to do things? (check GNOME's behaviour)
-      when 'w'[0]:               @today += 7*4
-      when Ncurses::KEY_NPAGE:   @today += 7*4
-      when 'b'[0]:               @today -= 7*4
-      when Ncurses::KEY_PPAGE:   @today -= 7*4
-      when '}'[0]:               @today = 7*52
-      when '{'[0]:               @today = 7*52
+      when 'w'[0]:               nextmonth
+      when Ncurses::KEY_NPAGE:   nextmonth
+      when 'b'[0]:               prevmonth
+      when Ncurses::KEY_PPAGE:   prevmonth
+      when '}'[0]:               nextyear
+      when '{'[0]:               prevyear
       end
     end
   end
@@ -92,6 +91,26 @@ class Cali
       counter += 1
     end
     Ncurses.move(y,x+1)
+  end
+  def nextmonth
+    oldtoday = @today.dup
+    @today += 4*7
+    if @today.month == oldtoday.month
+      @today += 7
+    end
+  end
+  def prevmonth
+    oldtoday = @today.dup
+    @today -= 4*7
+    if @today.month == oldtoday.month
+      @today -= 7
+    end
+  end
+  def nextyear
+    12.times { nextmonth }
+  end
+  def prevyear
+    12.times { prevmonth }
   end
   def weekdays
     wds = []
