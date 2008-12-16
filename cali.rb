@@ -21,29 +21,51 @@ class Cali
   def run
     begin
       @today = Date.today
-      @first = Date.new(@today.year,@today.month,1)
-      newlast = @today.dup
-      until newlast.month != @today.month
-        @last = newlast.dup
-        newlast += 1
-      end
       Ncurses.initscr
       Ncurses.cbreak
       Ncurses.noecho
-      #keypad(stdscr,TRUE)
-      displaycal
+      Ncurses.keypad(Ncurses.stdscr,true)
+      mainloop
     ensure
       Ncurses.endwin
     end
   end
+  def mainloop
+    while true
+      displaycal
+      case Ncurses.getch
+        # Exit
+      when 'q'[0]: break
+        # Directions
+      when 'l'[0]:               @today += 1
+      when Ncurses::KEY_RIGHT:   @today += 1
+      when 'h'[0]:               @today -= 1
+      when Ncurses::KEY_LEFT:    @today -= 1
+      when 'j'[0]:               @today += 7
+      when Ncurses::KEY_DOWN:    @today += 7
+      when 'k'[0]:               @today -= 7
+      when Ncurses::KEY_UP:      @today -= 7
+        # Extra movement
+        #TODO: is this the best way to do things? (check GNOME's behaviour)
+      when 'w'[0]:               @today += 7*4
+      when Ncurses::KEY_NPAGE:   @today += 7*4
+      when 'b'[0]:               @today -= 7*4
+      when Ncurses::KEY_PPAGE:   @today -= 7*4
+      when '}'[0]:               @today = 7*52
+      when '{'[0]:               @today = 7*52
+      end
+    end
+  end
   def displaycal
+    Ncurses.clear
+    Ncurses.move(0,0)
     Ncurses.printw(@today.strftime("   %B %Y\n"))
     Ncurses.printw(weekdays.join(" ")+"\n")
     displaydays
     Ncurses.refresh
   end
   def displaydays
-    counter = (@first - @first.wday)
+    counter = (first - first.wday)
     before_month = true
     after_month = false
     while not after_month
@@ -56,6 +78,9 @@ class Cali
         Ncurses.printw("   ")
         Ncurses.printw("\n") if after_month
       else
+        if counter == @today
+          x,y = Ncurses.getcurx(Ncurses.stdscr),Ncurses.getcury(Ncurses.stdscr)
+        end
         Ncurses.attron(Ncurses::A_REVERSE) if counter == @today
         Ncurses.printw("%2d" % counter.day)
         Ncurses.attroff(Ncurses::A_REVERSE) if counter == @today
@@ -66,6 +91,7 @@ class Cali
       end
       counter += 1
     end
+    Ncurses.move(y,x+1)
   end
   def weekdays
     wds = []
@@ -78,6 +104,17 @@ class Cali
       n += 1
     end
     wds
+  end
+  def first
+    Date.new(@today.year,@today.month,1)
+  end
+  def last
+    newlast = @today.dup
+    until newlast.month != @today.month
+      last = newlast.dup
+      newlast += 1
+    end
+    last
   end
 end
 
