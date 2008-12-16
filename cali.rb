@@ -48,7 +48,7 @@ class Cali
       when 'j'[0], Ncurses::KEY_DOWN, 14 # C-n
         nextweek
       when 'k'[0], Ncurses::KEY_UP, 16 # C-p
-        lastweek
+        prevweek
       when 'w'[0], Ncurses::KEY_NPAGE
         nextmonth
       when 'b'[0], Ncurses::KEY_PPAGE
@@ -126,7 +126,7 @@ class Cali
   def nextweek
     update { @today += 7 }
   end
-  def lastweek
+  def prevweek
     update { @today -= 7 }
   end
   def nextmonth
