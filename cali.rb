@@ -146,10 +146,20 @@ class Cali
     displaycal
   end
   def nextyear
-    12.times { nextmonth }
+    oldtoday = @today.dup
+    @today += 52*7
+    while @today.year == oldtoday.year or @today.month != oldtoday.month
+      @today += 7
+    end
+    displaycal
   end
   def prevyear
-    12.times { prevmonth }
+    oldtoday = @today.dup
+    @today -= 52*7
+    while @today.year == oldtoday.year or @today.month != oldtoday.month
+      @today -= 7
+    end
+    displaycal
   end
   def weekdays
     wds = []
