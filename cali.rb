@@ -42,21 +42,21 @@ class Cali
       when 12 # C-l
         displaycal
       when 'l'[0], Ncurses::KEY_RIGHT, 6 # C-f
-        tomorrow
+        move :tomorrow
       when 'h'[0], Ncurses::KEY_LEFT, 2 # C-b
-        yesterday
+        move :yesterday
       when 'j'[0], Ncurses::KEY_DOWN, 14 # C-n
-        nextweek
+        move :nextweek
       when 'k'[0], Ncurses::KEY_UP, 16 # C-p
-        prevweek
+        move :prevweek
       when 'w'[0], Ncurses::KEY_NPAGE
-        nextmonth
+        move :nextmonth
       when 'b'[0], Ncurses::KEY_PPAGE
-        prevmonth
+        move :prevmonth
       when '}'[0]
-        nextyear
+        move :nextyear
       when '{'[0]
-        prevyear
+        move :prevyear
       end
     end
   end
@@ -117,49 +117,45 @@ class Cali
       displaycal
     end
   end
-  def tomorrow;
-    update { @today += 1 }
-  end
-  def yesterday
-    update { @today -= 1 }
-  end
-  def nextweek
-    update { @today += 7 }
-  end
-  def prevweek
-    update { @today -= 7 }
-  end
-  def nextmonth
-    oldtoday = @today.dup
-    @today += 4*7
-    if @today.month == oldtoday.month
-      @today += 7
+  def move(to)
+    case to
+    when :tomorrow
+      update { @today += 1 }
+    when :yesterday
+      update { @today -= 1 }
+    when :nextweek
+      update { @today += 7 }
+    when :prevweek
+      update { @today -= 7 }
+    when :nextmonth
+      oldtoday = @today.dup
+      @today += 4*7
+      if @today.month == oldtoday.month
+        @today += 7
+      end
+      displaycal
+    when :prevmonth
+      oldtoday = @today.dup
+      @today -= 4*7
+      if @today.month == oldtoday.month
+        @today -= 7
+      end
+      displaycal
+    when :nextyear
+      oldtoday = @today.dup
+      @today += 52*7
+      while @today.year == oldtoday.year or @today.month != oldtoday.month
+        @today += 7
+      end
+      displaycal
+    when :prevyear
+      oldtoday = @today.dup
+      @today -= 52*7
+      while @today.year == oldtoday.year or @today.month != oldtoday.month
+        @today -= 7
+      end
+      displaycal
     end
-    displaycal
-  end
-  def prevmonth
-    oldtoday = @today.dup
-    @today -= 4*7
-    if @today.month == oldtoday.month
-      @today -= 7
-    end
-    displaycal
-  end
-  def nextyear
-    oldtoday = @today.dup
-    @today += 52*7
-    while @today.year == oldtoday.year or @today.month != oldtoday.month
-      @today += 7
-    end
-    displaycal
-  end
-  def prevyear
-    oldtoday = @today.dup
-    @today -= 52*7
-    while @today.year == oldtoday.year or @today.month != oldtoday.month
-      @today -= 7
-    end
-    displaycal
   end
   def weekdays
     wds = []
