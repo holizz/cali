@@ -1,0 +1,26 @@
+
+cali
+====
+
+Interactive cal(1) (but the name ical was taken)
+
+
+dates
+=====
+
+The -d/--dates option takes a filename as an argument. That file should contain
+linebreak-separated items containing strings of the form /\d{4}-\d{2}-\d{2}/.
+
+I have something similar in my home directory containing items such as:
+
+2008-12-21 Start on RE essay, ML revision
+
+2009-01-04 The L Word season 6 (final season)
+
+2009-01-22 Shop meeting
+
+It's a very simple diary. Try running:
+./cali.rb -d README
+
+The above dates should be underlined in the calendar, and pressing the
+appropriate key should display the item below the calendar.

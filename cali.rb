@@ -15,12 +15,27 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 require 'date'
+require 'optparse'
 require 'ncurses'
 
 class Cali
-  def initialize
+  def initialize(dates=nil)
     @today = Date.today
     @days = {}
+    @dates = {}
+    if dates
+      open(dates){|f|
+        until f.eof
+          line = f.readline.strip
+          d = line.match(/(\d{4})-(\d{2})-(\d{2})/)
+          if d
+            date = Date.new(*d[1..3].map{|m|m.to_i})
+            @dates[date] ||= []
+            @dates[date] << line
+          end
+        end
+      }
+    end
   end
   def run
     begin
@@ -41,6 +56,8 @@ class Cali
         break
       when 12 # C-l
         displaycal
+      when 'e'[0]
+        displayevents
       when 'l'[0], Ncurses::KEY_RIGHT, 6 # C-f
         move :tomorrow
       when 'h'[0], Ncurses::KEY_LEFT, 2 # C-b
@@ -57,6 +74,10 @@ class Cali
         move :nextyear
       when '{'[0]
         move :prevyear
+      when 'n'[0]
+        move :nextevent
+      when 'p'[0]
+        move :prevevent
       end
     end
   end
@@ -87,9 +108,11 @@ class Cali
         if counter == @today
           x,y = Ncurses.getcurx(Ncurses.stdscr),Ncurses.getcury(Ncurses.stdscr)
         end
+        Ncurses.attron(Ncurses::A_UNDERLINE) if has_items?(counter)
         Ncurses.attron(Ncurses::A_REVERSE) if counter == @today
         Ncurses.printw("%2d" % counter.day)
         Ncurses.attroff(Ncurses::A_REVERSE) if counter == @today
+        Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(counter)
         Ncurses.printw(" ")
       end
       if counter.wday == 6
@@ -99,13 +122,36 @@ class Cali
     end
     Ncurses.move(y,x+1)
   end
+  def displayevents
+    displaycal
+    bounce {
+      y = @days[last.day][1]
+      @dates[@today].each {|l|
+        y += 2
+        Ncurses.move(y,0)
+        Ncurses.printw("#{l}")
+      } if @dates[@today]
+    }
+  end
+  def bounce (&block)
+    y,x = Ncurses.getcury(Ncurses.stdscr),Ncurses.getcurx(Ncurses.stdscr)
+    yield
+    Ncurses.move(y,x)
+  end
   def movecursor(old)
-    a = @days[old.day]
-    Ncurses.mvprintw(a[1],a[0],"%2d" % old.day)
+    if old != @today
+      a = @days[old.day]
+      Ncurses.attron(Ncurses::A_UNDERLINE) if has_items?(old)
+      Ncurses.mvprintw(a[1],a[0],"%2d" % old.day)
+      Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(old)
+    end
+
+    Ncurses.attron(Ncurses::A_UNDERLINE) if has_items?(@today)
     Ncurses.attron(Ncurses::A_REVERSE)
     a = @days[@today.day]
     Ncurses.mvprintw(a[1],a[0],"%2d" % @today.day)
     Ncurses.attroff(Ncurses::A_REVERSE)
+    Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(@today)
     Ncurses.move(a[1],a[0]+1)
   end
   def update(&block)
@@ -155,6 +201,16 @@ class Cali
         @today -= 7
       end
       displaycal
+    when :nextevent
+      update { 
+        newtoday = @dates.keys.select{|d| @today < d }.sort.first
+        @today = newtoday if newtoday
+      }
+    when :prevevent
+      update {
+        newtoday = @dates.keys.select{|d| @today > d }.sort.last
+        @today = newtoday if newtoday
+      }
     end
   end
   def weekdays
@@ -180,9 +236,19 @@ class Cali
     end
     last
   end
+  def has_items?(date=@today)
+    @dates.include?(date)
+  end
 end
 
 if __FILE__ == $0
-  cali=Cali.new
+  options = {}
+  OptionParser.new { |opts|
+    opts.banner = "Usage: cali [-d FILE]"
+    opts.on("-d","--dates FILE","Use FILE for events") {|d|
+      options[:dates] = d
+    }
+  }.parse!
+  cali=Cali.new(options[:dates])
   cali.run
 end
