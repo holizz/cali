@@ -4,6 +4,11 @@ cali
 
 Interactive cal(1) (but the name ical was taken)
 
+.calirc.rb
+==========
+
+This file lives in your home directory and is a Ruby script which gets required
+if it exists. See dotcalirc.rb for an example.
 
 dates
 =====
