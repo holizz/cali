@@ -19,6 +19,21 @@ require 'optparse'
 require 'ncurses'
 
 class Cali
+  KEYBINDINGS = {
+    ['q'[0]]=> :quit,
+    [12]=> :refresh, # C-l
+    ['e'[0], 10]=> :showevents, # <RET>
+    ['l'[0], Ncurses::KEY_RIGHT, 6]=> :tomorrow, # C-f
+    ['h'[0], Ncurses::KEY_LEFT, 2]=> :yesterday, # C-b
+    ['j'[0], Ncurses::KEY_DOWN, 14]=> :nextweek, # C-n
+    ['k'[0], Ncurses::KEY_UP, 16]=> :prevweek, # C-p
+    ['n'[0], Ncurses::KEY_NPAGE]=> :nextmonth,
+    ['p'[0], Ncurses::KEY_PPAGE]=> :prevmonth,
+    ['}'[0]]=> :nextyear,
+    ['{'[0]]=> :prevyear,
+    ['w'[0]]=> :nextevent,
+    ['b'[0]]=> :prevevent
+  }
   def initialize(dates=nil)
     @today = Date.today
     @days = {}
@@ -36,6 +51,12 @@ class Cali
         end
       }
     end
+    @key = {}
+    KEYBINDINGS.each {|k,v|
+      k.each {|kk|
+        @key[kk] = v
+      }
+    }
   end
   def run
     begin
@@ -50,34 +71,9 @@ class Cali
   end
   def mainloop
     displaycal
-    while true
-      case Ncurses.getch
-      when 'q'[0]
-        break
-      when 12 # C-l
-        displaycal
-      when 'e'[0], 10 # <RET>
-        displayevents
-      when 'l'[0], Ncurses::KEY_RIGHT, 6 # C-f
-        move :tomorrow
-      when 'h'[0], Ncurses::KEY_LEFT, 2 # C-b
-        move :yesterday
-      when 'j'[0], Ncurses::KEY_DOWN, 14 # C-n
-        move :nextweek
-      when 'k'[0], Ncurses::KEY_UP, 16 # C-p
-        move :prevweek
-      when 'n'[0], Ncurses::KEY_NPAGE
-        move :nextmonth
-      when 'p'[0], Ncurses::KEY_PPAGE
-        move :prevmonth
-      when '}'[0]
-        move :nextyear
-      when '{'[0]
-        move :prevyear
-      when 'w'[0]
-        move :nextevent
-      when 'b'[0]
-        move :prevevent
+    catch :quit do
+      while true
+        move @key[Ncurses.getch]
       end
     end
   end
@@ -165,6 +161,12 @@ class Cali
   end
   def move(to)
     case to
+    when :quit
+      throw :quit
+    when :refresh
+      displaycal
+    when :showevents
+      displayevents
     when :tomorrow
       update { @today += 1 }
     when :yesterday
