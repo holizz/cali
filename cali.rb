@@ -35,8 +35,10 @@ class Cali
     ['b'[0]]=> :prevevent
   }
   def initialize(dates=nil)
+    preinit_hook
     @today = Date.today
     @days = {}
+    dates ||= @default_dates
     @dates = {}
     if dates
       open(dates){|f|
@@ -57,6 +59,7 @@ class Cali
         @key[kk] = v
       }
     }
+    postinit_hook
   end
   def run
     begin
@@ -240,6 +243,10 @@ class Cali
   end
   def has_items?(date=@today)
     @dates.include?(date)
+  end
+  def preinit_hook
+  end
+  def postinit_hook
   end
 end
 
