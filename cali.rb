@@ -56,7 +56,7 @@ class Cali
         break
       when 12 # C-l
         displaycal
-      when 'e'[0]
+      when 'e'[0], 10 # <RET>
         displayevents
       when 'l'[0], Ncurses::KEY_RIGHT, 6 # C-f
         move :tomorrow
@@ -66,17 +66,17 @@ class Cali
         move :nextweek
       when 'k'[0], Ncurses::KEY_UP, 16 # C-p
         move :prevweek
-      when 'w'[0], Ncurses::KEY_NPAGE
+      when 'n'[0], Ncurses::KEY_NPAGE
         move :nextmonth
-      when 'b'[0], Ncurses::KEY_PPAGE
+      when 'p'[0], Ncurses::KEY_PPAGE
         move :prevmonth
       when '}'[0]
         move :nextyear
       when '{'[0]
         move :prevyear
-      when 'n'[0]
+      when 'w'[0]
         move :nextevent
-      when 'p'[0]
+      when 'b'[0]
         move :prevevent
       end
     end
