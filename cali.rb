@@ -251,6 +251,8 @@ if __FILE__ == $0
       options[:dates] = d
     }
   }.parse!
+  dotcali = Dir["#{ENV['HOME']}/.calirc.rb"][0]
+  require dotcali if dotcali
   cali=Cali.new(options[:dates])
   cali.run
 end
