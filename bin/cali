@@ -73,6 +73,7 @@ class Cali
   end
   def mainloop
     displaycal
+    displayevents
     catch :quit do
       while true
         move @key[Ncurses.getch]
