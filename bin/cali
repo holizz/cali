@@ -22,7 +22,6 @@ class Cali
   KEYBINDINGS = {
     ['q'[0]]=> :quit,
     [12]=> :refresh, # C-l
-    ['e'[0], 10]=> :showevents, # <RET>
     ['l'[0], Ncurses::KEY_RIGHT, 6]=> :tomorrow, # C-f
     ['h'[0], Ncurses::KEY_LEFT, 2]=> :yesterday, # C-b
     ['j'[0], Ncurses::KEY_DOWN, 14]=> :nextweek, # C-n
@@ -168,8 +167,6 @@ class Cali
       throw :quit
     when :refresh
       displaycal
-    when :showevents
-      displayevents
     when :tomorrow
       update { @today += 1 }
     when :yesterday
@@ -217,6 +214,7 @@ class Cali
         @today = newtoday if newtoday
       }
     end
+    displayevents
   end
   def weekdays
     wds = []
