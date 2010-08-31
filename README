@@ -7,14 +7,15 @@ Interactive cal(1) (but the name ical was taken)
 .calirc.rb
 ==========
 
-This file lives in your home directory and is a Ruby script which gets required
-if it exists. See dotcalirc.rb for an example.
+This file lives in your home directory and is a Ruby script which gets
+required if it exists. See examples/dotcalirc.rb for an example.
 
 dates
 =====
 
-The -d/--dates option takes a filename as an argument. That file should contain
-linebreak-separated items containing strings of the form /\d{4}-\d{2}-\d{2}/.
+The -d/--dates option takes a filename as an argument. That file should
+contain linebreak-separated items containing strings of the form
+/\d{4}-\d{2}-\d{2}/.
 
 I have something similar in my home directory containing items such as:
 
@@ -25,7 +26,7 @@ I have something similar in my home directory containing items such as:
 2009-01-22 Shop meeting
 
 It's a very simple diary. Try running:
-./cali.rb -d README
+ruby -rubygems bin/cali -d README
 
 The above dates should be underlined in the calendar, and pressing the
 appropriate key should display the item below the calendar.
