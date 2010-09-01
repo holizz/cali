@@ -42,8 +42,8 @@ class Cali
         options[:dates] = d
       }
     }.parse!
-    dotcali = Dir["#{ENV['HOME']}/.calirc.rb"][0]
-    require dotcali if dotcali
+    dotcali = File.expand_path "~/.calirc"
+    load dotcali if File.exist? dotcali
     cali=Cali.new(options[:dates])
     cali.run
   end
