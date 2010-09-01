@@ -71,7 +71,6 @@ class Cali
   end
 
   def initialize
-    preinit_hook
     @today = Date.today
     @days = {}
     @dates = {}
@@ -94,7 +93,6 @@ class Cali
         @key[kk] = v
       }
     }
-    postinit_hook
   end
   def run
     begin
@@ -278,9 +276,5 @@ class Cali
   end
   def has_items?(date=@today)
     @dates.include?(date)
-  end
-  def preinit_hook
-  end
-  def postinit_hook
   end
 end
