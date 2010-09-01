@@ -55,7 +55,7 @@ class Cali
     dates ||= @default_dates
     @dates = {}
     if dates
-      open(dates){|f|
+      open(File.expand_path(dates)){|f|
         until f.eof
           line = f.readline.strip
           d = line.match(/(\d{4})-(\d{2})-(\d{2})/)
