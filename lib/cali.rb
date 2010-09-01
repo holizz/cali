@@ -18,6 +18,21 @@ require 'date'
 require 'optparse'
 require 'ncurses'
 
+class OpenStruct
+  attr_reader :hsh
+  def method_missing(method, value = nil)
+    method = method.to_s
+    if method.match(/^(.*)=$/)
+      @hsh[$1] = value
+    else
+      @hsh[method]
+    end
+  end
+  def initialize
+    @hsh = {}
+  end
+end
+
 class Cali
   KEYBINDINGS = {
     ['q'[0]]=> :quit,
@@ -35,27 +50,33 @@ class Cali
   }
 
   def Cali::run
-    options = {}
+    dotcali = File.expand_path "~/.calirc"
+    load dotcali if File.exist? dotcali
+
+    dates = nil
     OptionParser.new { |opts|
       opts.banner = "Usage: cali [-d FILE]"
       opts.on("-d","--dates FILE","Use FILE for events") {|d|
-        options[:dates] = d
+        Cali.config.dates = d
       }
     }.parse!
-    dotcali = File.expand_path "~/.calirc"
-    load dotcali if File.exist? dotcali
-    cali=Cali.new(options[:dates])
+
+    cali=Cali.new
     cali.run
   end
 
-  def initialize(dates=nil)
+  def Cali::config
+    @@config ||= OpenStruct.new
+    @@config
+  end
+
+  def initialize
     preinit_hook
     @today = Date.today
     @days = {}
-    dates ||= @default_dates
     @dates = {}
-    if dates
-      open(File.expand_path(dates)){|f|
+    if Cali.config.dates
+      open(File.expand_path(Cali.config.dates)){|f|
         until f.eof
           line = f.readline.strip
           d = line.match(/(\d{4})-(\d{2})-(\d{2})/)
