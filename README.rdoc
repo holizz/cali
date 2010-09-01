@@ -1,0 +1,50 @@
+= cali
+
+Interactive cal(1) (but the name ical was taken)
+
+== Usage
+
+ gem install cali
+ cali
+ # interactive session
+
+ cat > ~/dates <<END
+ 2010-09-01 Write a better README for cali
+ 2010-09-02 ...
+ 2010-09-03 Profit
+ END
+
+ cali -d ~/dates
+ # interactive session with calendar entries
+
+ cat > ~/.calirc <<END
+ Cali.config.dates = '~/dates'
+ END
+
+ cali
+ # interactive session with calendar entries
+
+== Screenshots
+
+ RUBYLIB=lib ruby -rubygems bin/cali -d README
+
+    September 2010
+ Su Mo Tu We Th Fr Sa
+           1  2  3  4
+  5  6  7  8  9 10 11
+ 12 13 14 15 16 17 18
+ 19 20 21 22 23 24 25
+ 26 27 28 29 30
+
+ 2010-09-01 Write a better README for cali
+
+( The 1st is highlighted, and the 1st, 2nd, and 3rd are underlined. )
+
+== Key bindings
+
+[Up/down/left/right]  hjkl, Emacs bindings, arrow keys
+[Next/previous month] n/p, page down/page up
+[Next/previous year]  }/{
+[Next/previous event] w/b (this navigates between underlined days)
+[Quit]                q
+[Refresh]             ^L (Ctrl-L)
