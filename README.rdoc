@@ -26,7 +26,7 @@ Interactive cal(1) (but the name ical was taken)
 
 == Screenshots
 
- RUBYLIB=lib ruby -rubygems bin/cali -d README
+ ruby -rubygems bin/cali -d README
 
     September 2010
  Su Mo Tu We Th Fr Sa
