@@ -94,6 +94,7 @@ class Cali
       }
     }
   end
+
   def run
     begin
       Ncurses.initscr
@@ -105,6 +106,7 @@ class Cali
       Ncurses.endwin
     end
   end
+
   def mainloop
     displaycal
     displayevents
@@ -114,6 +116,7 @@ class Cali
       end
     end
   end
+
   def displaycal
     Ncurses.clear
     Ncurses.move(0,0)
@@ -122,6 +125,7 @@ class Cali
     displaydays
     Ncurses.refresh
   end
+
   def displaydays
     counter = (first - first.wday)
     before_month = true
@@ -155,6 +159,7 @@ class Cali
     end
     Ncurses.move(y,x+1)
   end
+
   def displayevents
     displaycal
     bounce {
@@ -166,11 +171,13 @@ class Cali
       } if @dates[@today]
     }
   end
+
   def bounce (&block)
     y,x = Ncurses.getcury(Ncurses.stdscr),Ncurses.getcurx(Ncurses.stdscr)
     yield
     Ncurses.move(y,x)
   end
+
   def movecursor(old)
     if old != @today
       a = @days[old.day]
@@ -187,6 +194,7 @@ class Cali
     Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(@today)
     Ncurses.move(a[1],a[0]+1)
   end
+
   def update(&block)
     oldtoday = @today.dup
     yield
@@ -196,6 +204,7 @@ class Cali
       displaycal
     end
   end
+
   def move(to)
     case to
     when :quit
@@ -251,6 +260,7 @@ class Cali
     end
     displayevents
   end
+
   def weekdays
     wds = []
     counter = (@today - @today.wday)
@@ -263,9 +273,11 @@ class Cali
     end
     wds
   end
+
   def first
     Date.new(@today.year,@today.month,1)
   end
+
   def last
     newlast = @today.dup
     until newlast.month != @today.month
@@ -274,6 +286,7 @@ class Cali
     end
     last
   end
+
   def has_items?(date=@today)
     @dates.include?(date)
   end
