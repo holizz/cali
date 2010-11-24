@@ -33,7 +33,7 @@ def update(fn):
 class Cali:
 
     # Signal
-    class Quit:
+    class Quit(BaseException):
         pass
 
     class Bounce:
