@@ -15,10 +15,15 @@
 # OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import curses
+import datetime
 import os
 import re
-import datetime
-import curses
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 def update(fn):
     def a(self):
@@ -43,7 +48,7 @@ class Cali:
         def __enter__(self):
             self.y, self.x = self.stdscr.getyx()
 
-        def __exit__(self):
+        def __exit__(self, cls, value, traceback):
             self.stdscr.move(self.y, self.x)
 
     KEYBINDINGS = {
@@ -61,19 +66,22 @@ class Cali:
             'prevevent': set([ord('b')])
             }
 
+    CONFIG_FILE = '$XDG_CONFIG_HOME/cali/config'
+
     def __init__(self):
         self.config = {'dates': None}
+        self.load_config()
         self.today = datetime.date.today()
         self.days = {}
         self.dates = {}
 
         if self.config['dates']:
-            with open(os.path.expanduser(os.path.expandvars(self.config['dates']))) as f:
+            with open(self.expandpath(self.config['dates'])) as f:
                 for l in f.readlines():
                     line = l.strip()
                     d = re.match('(\d{4})-(\d{2})-(\d{2})', line)
                     if d:
-                        date = datetime.date([int(x) for x in d])
+                        date = datetime.date(*[int(x) for x in d.groups()])
                         self.dates.setdefault(date, [])
                         self.dates[date].append(line)
 
@@ -81,6 +89,17 @@ class Cali:
         for v,k in self.KEYBINDINGS.items():
             for kk in k:
                 self.key[kk] = v
+
+    def load_config(self):
+        if os.path.exists(self.expandpath(self.CONFIG_FILE)):
+            cfg = configparser.ConfigParser()
+            cfg.read(self.expandpath(self.CONFIG_FILE))
+            self.config.update(cfg.defaults())
+
+    def expandpath(self, p):
+        if 'XDG_CONFIG_HOME' not in os.environ:
+            os.environ['XDG_CONFIG_HOME'] = '~/.config'
+        return os.path.expanduser(os.path.expandvars(p))
 
     def run(self):
         try:
@@ -151,7 +170,7 @@ class Cali:
         self.displaycal()
         if self.today in self.dates:
             with self.Bounce(self.stdscr):
-                y = self.days[last.day][1]
+                y = self.days[self.last().day][1]
                 for l in self.dates[self.today]:
                     y += 2
                     self.stdscr.move(y,0)
