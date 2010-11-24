@@ -261,7 +261,7 @@ class Cali:
         counter = self.today - datetime.timedelta(self.today.isoweekday())
         n = 0
         while n < 7:
-            #TODO: handle other charsets correctly
+            #TODO: handle widechars correctly
             wds.append(counter.strftime('%a')[0:2])
             counter += datetime.timedelta(1)
             n += 1
