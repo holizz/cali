@@ -128,9 +128,9 @@ class Cali:
     def displaycal(self):
         self.stdscr.clear()
         self.stdscr.move(0,0)
-        self.stdscr.addstr(self.today.strftime("   %B %Y\n"))
+        self.stdscr.addstr(self.today.strftime('   %B %Y\n'))
         
-        self.stdscr.addstr(" ".join(self.weekdays())+"\n")
+        self.stdscr.addstr(' '.join(self.weekdays())+'\n')
         self.displaydays()
         self.stdscr.refresh()
 
@@ -144,9 +144,9 @@ class Cali:
             elif counter.month != self.today.month and not before_month:
                 after_month = True
             if before_month or after_month:
-                self.stdscr.addstr("   ")
+                self.stdscr.addstr('   ')
                 if after_month:
-                    self.stdscr.addstr("\n")
+                    self.stdscr.addstr('\n')
             else:
                 self.days[counter.day] = self.stdscr.getyx()
                 if counter == self.today:
@@ -155,14 +155,14 @@ class Cali:
                     self.stdscr.attron(curses.A_UNDERLINE)
                 if counter == self.today:
                     self.stdscr.attron(curses.A_REVERSE)
-                self.stdscr.addstr("%2d" % counter.day)
+                self.stdscr.addstr('%2d' % counter.day)
                 if counter == self.today:
                     self.stdscr.attroff(curses.A_REVERSE)
                 if counter in self.dates:
                     self.stdscr.attroff(curses.A_UNDERLINE)
-                self.stdscr.addstr(" ")
+                self.stdscr.addstr(' ')
             if counter.isoweekday() == 6:
-                self.stdscr.addstr("\n")
+                self.stdscr.addstr('\n')
             counter += datetime.timedelta(1)
         self.stdscr.move(y,x+1)
 
@@ -182,7 +182,7 @@ class Cali:
             if old in self.dates:
                 self.stdscr.attron(curses.A_UNDERLINE)
             self.stdscr.move(a[1], a[0])
-            self.stdscr.addstr("%2d" % old.day)
+            self.stdscr.addstr('%2d' % old.day)
             if old in self.dates:
                 self.stdscr.attroff(curses.A_UNDERLINE)
         if self.today in self.dates:
@@ -190,7 +190,7 @@ class Cali:
         self.stdscr.attron(curses.A_REVERSE)
         a = self.days[self.today.day]
         self.stdscr.move(a[1], a[0])
-        self.stdscr.addstr("%2d" % self.today.day)
+        self.stdscr.addstr('%2d' % self.today.day)
         self.stdscr.attroff(curses.A_REVERSE)
         if self.today in self.dates:
             self.stdscr.attroff(curses.A_UNDERLINE)
