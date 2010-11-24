@@ -1,2 +1,3 @@
-pkg/
-cali.gemspec
+MANIFEST
+build/
+dist/
