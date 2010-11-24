@@ -104,7 +104,7 @@ class Cali:
         self.stdscr.refresh()
 
     def displaydays(self):
-        counter = (self.first() - self.first().isoweekday())
+        counter = self.first() - datetime.timedelta(self.first().isoweekday())
         before_month = True
         after_month = False
         while not after_month:
@@ -145,22 +145,25 @@ class Cali:
                     self.stdscr.move(y,0)
                     self.stdscr.addstr(l)
 
-#   def movecursor(old)
-#       if old != @today
-#           a = @days[old.day]
-#           Ncurses.attron(Ncurses::A_UNDERLINE) if has_items?(old)
-#           Ncurses.mvprintw(a[1],a[0],"%2d" % old.day)
-#           Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(old)
-#       end
-#
-#       Ncurses.attron(Ncurses::A_UNDERLINE) if has_items?(@today)
-#       Ncurses.attron(Ncurses::A_REVERSE)
-#       a = @days[@today.day]
-#       Ncurses.mvprintw(a[1],a[0],"%2d" % @today.day)
-#       Ncurses.attroff(Ncurses::A_REVERSE)
-#       Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(@today)
-#       Ncurses.move(a[1],a[0]+1)
-#   end
+    def movecursor(self, old):
+        if old != self.today:
+            a = self.days[old.day]
+            if self.has_items(old):
+                self.stdscr.attron(curses.A_UNDERLINE)
+            self.stdscr.move(a[1], a[0])
+            self.stdscr.addstr("%2d" % old.day)
+            if self.has_items(old):
+                self.stdscr.attroff(curses.A_UNDERLINE)
+        if self.has_items(self.today):
+            self.stdscr.attron(curses.A_UNDERLINE)
+        self.stdscr.attron(curses.A_REVERSE)
+        a = self.days[self.today.day]
+        self.stdscr.move(a[1], a[0])
+        self.stdscr.addstr("%2d" % self.today.day)
+        self.stdscr.attroff(curses.A_REVERSE)
+        if self.has_items(self.today):
+            self.stdscr.attroff(curses.A_UNDERLINE)
+        self.stdscr.move(a[1], a[0]+1)
 
 #   def update(&block)
 #       oldtoday = @today.dup
@@ -228,18 +231,16 @@ class Cali:
 #       displayevents
 #   end
 
-#   def weekdays
-#       wds = []
-#       counter = (@today - @today.wday)
-#       n = 0
-#       while n < 7
-#           #TODO: handle other charsets correctly
-#           wds << counter.strftime('%a')[0..1]
-#           counter += 1
-#           n += 1
-#       end
-#       wds
-#   end
+    def weekdays(self):
+        wds = []
+        counter = self.today - datetime.timedelta(self.today.isoweekday())
+        n = 0
+        while n < 7:
+            #TODO: handle other charsets correctly
+            wds.append(counter.strftime('%a')[0])
+            counter += datetime.timedelta(1)
+            n += 1
+        return wds
 
 #   def first
 #       Date.new(@today.year,@today.month,1)
