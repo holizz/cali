@@ -262,7 +262,7 @@ class Cali:
         n = 0
         while n < 7:
             #TODO: handle other charsets correctly
-            wds.append(counter.strftime('%a')[0])
+            wds.append(counter.strftime('%a')[0:2])
             counter += datetime.timedelta(1)
             n += 1
         return wds
