@@ -241,13 +241,13 @@ class Cali:
             self.cali.displaycal()
         @update
         def nextevent(self):
-            for d in self.cali.dates.keys():
+            for d in sorted(self.cali.dates.keys()):
                 if d > self.cali.today:
                     self.cali.today = d
                     break
         @update
         def prevevent(self):
-            for d in self.cali.dates.keys():
+            for d in reversed(sorted(self.cali.dates.keys())):
                 if d < self.cali.today:
                     self.cali.today = d
                     break
