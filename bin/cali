@@ -19,6 +19,7 @@ import curses
 import datetime
 import os
 import re
+import sys
 
 try:
     import configparser
@@ -68,15 +69,18 @@ class Cali:
 
     CONFIG_FILE = '$XDG_CONFIG_HOME/cali/config'
 
-    def __init__(self):
-        self.config = {'dates': None}
+    def __init__(self, files=[]):
+        self.config = {'dates': []}
         self.load_config()
+        if files:
+            self.config['dates'] = files
+
         self.today = datetime.date.today()
         self.days = {}
         self.dates = {}
 
-        if self.config['dates']:
-            with open(self.expandpath(self.config['dates'])) as f:
+        for date_file in self.config['dates']:
+            with open(self.expandpath(date_file)) as f:
                 for l in f.readlines():
                     line = l.strip()
                     d = re.match('(\d{4})-(\d{2})-(\d{2})', line)
@@ -94,7 +98,10 @@ class Cali:
         if os.path.exists(self.expandpath(self.CONFIG_FILE)):
             cfg = configparser.ConfigParser()
             cfg.read(self.expandpath(self.CONFIG_FILE))
-            self.config.update(cfg.defaults())
+            if 'dates' in cfg.defaults():
+                d = cfg.defaults()['dates']
+                if d:
+                    self.config['dates'] = [d]
 
     def expandpath(self, p):
         if 'XDG_CONFIG_HOME' not in os.environ:
@@ -277,4 +284,4 @@ class Cali:
             newlast += datetime.timedelta(1)
         return last
 
-Cali().run()
+Cali(sys.argv[1:]).run()

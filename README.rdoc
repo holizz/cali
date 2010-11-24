@@ -4,7 +4,7 @@ Interactive cal(1) (but the name ical was taken)
 
 == Usage
 
- gem install cali
+ pip install cali
  cali
  # interactive session
 
@@ -14,11 +14,13 @@ Interactive cal(1) (but the name ical was taken)
  2010-09-03 Profit
  END
 
- cali -d ~/dates
+ cali ~/dates
  # interactive session with calendar entries
 
- cat > ~/.calirc <<END
- Cali.config.dates = '~/dates'
+ mkdir -p ~/.config/cali
+ cat > ~/.config/cali/config <<END
+ [DEFAULT]
+ dates = ~/dates
  END
 
  cali
@@ -26,7 +28,7 @@ Interactive cal(1) (but the name ical was taken)
 
 == Screenshots
 
- ruby -rubygems bin/cali -d README
+ bin/cali README.rdoc
 
     September 2010
  Su Mo Tu We Th Fr Sa
