@@ -245,14 +245,12 @@ class Cali:
     def first(self):
         return datetime.date(self.today.year, self.today.month, 1)
 
-#   def last
-#       newlast = @today.dup
-#       until newlast.month != @today.month
-#           last = newlast.dup
-#           newlast += 1
-#       end
-#       last
-#   end
+    def last(self):
+        newlast = self.today
+        while newlast.month == self.today.month:
+            last = newlast
+            newlast += datetime.timedelta(1)
+        return last
 
     def has_items(self, date=None):
         if date is None:
