@@ -132,12 +132,12 @@ class Cali:
                 self.stdscr.addstr(" ")
             if counter.isoweekday() == 6:
                 self.stdscr.addstr("\n")
-            counter += 1
+            counter += datetime.timedelta(1)
         self.stdscr.move(y,x+1)
 
     def displayevents(self):
         self.displaycal()
-        if self.dates[self.today]:
+        if self.today in self.dates:
             with self.Bounce(self.stdscr):
                 y = self.days[last.day][1]
                 for l in self.dates[self.today]:
@@ -242,9 +242,8 @@ class Cali:
             n += 1
         return wds
 
-#   def first
-#       Date.new(@today.year,@today.month,1)
-#   end
+    def first(self):
+        return datetime.date(self.today.year, self.today.month, 1)
 
 #   def last
 #       newlast = @today.dup
@@ -255,9 +254,9 @@ class Cali:
 #       last
 #   end
 
-#   def has_items?(date=@today)
-#       @dates.include?(date)
-#   end
-#nd
+    def has_items(self, date=None):
+        if date is None:
+            date = self.today
+        date in self.dates
 
 Cali().run()
