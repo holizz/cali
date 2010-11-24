@@ -170,7 +170,7 @@ class Cali:
         self.displaycal()
         if self.today in self.dates:
             with self.Bounce(self.stdscr):
-                y = self.days[self.last().day][1]
+                y = self.days[self.last().day][0]
                 for l in self.dates[self.today]:
                     y += 2
                     self.stdscr.move(y,0)
