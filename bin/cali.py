@@ -20,6 +20,16 @@ import re
 import datetime
 import curses
 
+def update(fn):
+    def a(self):
+        oldtoday = self.cali.today
+        fn(self)
+        if oldtoday.month == self.cali.today.month and oldtoday.year == self.cali.today.year:
+            self.cali.movecursor(oldtoday)
+        else:
+            self.cali.displaycal()
+    return a
+
 class Cali:
 
     # Signal
@@ -90,8 +100,10 @@ class Cali:
         self.displayevents()
         try:
             while True:
-                self.move(self.key[self.stdscr.getch])
-        except Cali.Quit:
+                c = self.stdscr.getch()
+                if c in self.key:
+                    self.move(self.key[c])
+        except self.Quit:
             pass
 
     def displaycal(self):
@@ -165,71 +177,64 @@ class Cali:
             self.stdscr.attroff(curses.A_UNDERLINE)
         self.stdscr.move(a[1], a[0]+1)
 
-#   def update(&block)
-#       oldtoday = @today.dup
-#       yield
-#       if oldtoday.month == @today.month and oldtoday.year == @today.year
-#           movecursor(oldtoday)
-#       else
-#           displaycal
-#       end
-#   end
-
-#   def move(to)
-#       case to
-#       when :quit
-#           throw :quit
-#       when :refresh
-#           displaycal
-#       when :tomorrow
-#           update { @today += 1 }
-#       when :yesterday
-#           update { @today -= 1 }
-#       when :nextweek
-#           update { @today += 7 }
-#       when :prevweek
-#           update { @today -= 7 }
-#       when :nextmonth
-#           oldtoday = @today.dup
-#           @today += 4*7
-#           if @today.month == oldtoday.month
-#               @today += 7
-#           end
-#           displaycal
-#       when :prevmonth
-#           oldtoday = @today.dup
-#           @today -= 4*7
-#           if @today.month == oldtoday.month
-#               @today -= 7
-#           end
-#           displaycal
-#       when :nextyear
-#           oldtoday = @today.dup
-#           @today += 52*7
-#           while @today.year == oldtoday.year or @today.month != oldtoday.month
-#               @today += 7
-#           end
-#           displaycal
-#       when :prevyear
-#           oldtoday = @today.dup
-#           @today -= 52*7
-#           while @today.year == oldtoday.year or @today.month != oldtoday.month
-#               @today -= 7
-#           end
-#           displaycal
-#       when :nextevent
-#           update { 
-#               newtoday = @dates.keys.select{|d| @today < d }.sort.first
-#               @today = newtoday if newtoday
-#           }
-#       when :prevevent
-#           update {
-#               newtoday = @dates.keys.select{|d| @today > d }.sort.last
-#               @today = newtoday if newtoday
-#           }
-#       end
-#       displayevents
-#   end
+    class Actions(object): # new-style class for 2.x
+        def __init__(self, cali):
+            self.cali = cali
+        def quit(self):
+            raise Cali.Quit
+        def refresh(self):
+            self.cali.displaycal()
+        @update
+        def tomorrow(self):
+            self.cali.today += datetime.timedelta(1)
+        @update
+        def yesterday(self):
+            self.cali.today -= datetime.timedelta(1)
+        @update
+        def nextweek(self):
+            self.cali.today += datetime.timedelta(7)
+        @update
+        def prevweek(self):
+            self.cali.today -= datetime.timedelta(7)
+        def nextmonth(self):
+            oldtoday = self.cali.today
+            self.cali.today += datetime.timedelta(4*7)
+            if self.cali.today.month == oldtoday.month:
+                self.cali.today += datetime.timedelta(7)
+            self.cali.displaycal()
+        def prevmonth(self):
+            oldtoday = self.cali.today
+            self.cali.today -= datetime.timedelta(4*7)
+            if self.cali.today.month == oldtoday.month:
+                self.cali.today -= datetime.timedelta(7)
+            self.cali.displaycal()
+        def nextyear(self):
+            oldtoday = self.cali.today
+            self.cali.today += datetime.timedelta(52*7)
+            while self.cali.today.year == oldtoday.year or self.cali.today.month != oldtoday.month:
+                self.cali.today += datetime.timedelta(7)
+            self.cali.displaycal()
+        def prevyear(self):
+            oldtoday = self.cali.today
+            self.cali.today -= datetime.timedelta(52*7)
+            while self.cali.today.year == oldtoday.year or self.cali.today.month != oldtoday.month:
+                self.cali.today -= datetime.timedelta(7)
+            self.cali.displaycal()
+        @update
+        def nextevent(self):
+            for d in self.cali.dates.keys():
+                if d > self.cali.today:
+                    self.cali.today = d
+                    break
+        @update
+        def prevevent(self):
+            for d in self.cali.dates.keys():
+                if d < self.cali.today:
+                    self.cali.today = d
+                    break
+    def move(self, to):
+        self.Actions(self).__getattribute__(to)()
+        self.displayevents()
 
     def weekdays(self):
         wds = []
