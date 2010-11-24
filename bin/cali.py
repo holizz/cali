@@ -151,14 +151,14 @@ class Cali:
                 self.days[counter.day] = self.stdscr.getyx()
                 if counter == self.today:
                     y,x = self.stdscr.getyx()
-                if self.has_items(counter):
+                if counter in self.dates:
                     self.stdscr.attron(curses.A_UNDERLINE)
                 if counter == self.today:
                     self.stdscr.attron(curses.A_REVERSE)
                 self.stdscr.addstr("%2d" % counter.day)
                 if counter == self.today:
                     self.stdscr.attroff(curses.A_REVERSE)
-                if self.has_items(counter):
+                if counter in self.dates:
                     self.stdscr.attroff(curses.A_UNDERLINE)
                 self.stdscr.addstr(" ")
             if counter.isoweekday() == 6:
@@ -179,20 +179,20 @@ class Cali:
     def movecursor(self, old):
         if old != self.today:
             a = self.days[old.day]
-            if self.has_items(old):
+            if old in self.dates:
                 self.stdscr.attron(curses.A_UNDERLINE)
             self.stdscr.move(a[1], a[0])
             self.stdscr.addstr("%2d" % old.day)
-            if self.has_items(old):
+            if old in self.dates:
                 self.stdscr.attroff(curses.A_UNDERLINE)
-        if self.has_items(self.today):
+        if self.today in self.dates:
             self.stdscr.attron(curses.A_UNDERLINE)
         self.stdscr.attron(curses.A_REVERSE)
         a = self.days[self.today.day]
         self.stdscr.move(a[1], a[0])
         self.stdscr.addstr("%2d" % self.today.day)
         self.stdscr.attroff(curses.A_REVERSE)
-        if self.has_items(self.today):
+        if self.today in self.dates:
             self.stdscr.attroff(curses.A_UNDERLINE)
         self.stdscr.move(a[1], a[0]+1)
 
@@ -276,10 +276,5 @@ class Cali:
             last = newlast
             newlast += datetime.timedelta(1)
         return last
-
-    def has_items(self, date=None):
-        if date is None:
-            date = self.today
-        date in self.dates
 
 Cali().run()
