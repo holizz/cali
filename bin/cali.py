@@ -21,8 +21,20 @@ import datetime
 import curses
 
 class Cali:
+
+    # Signal
     class Quit:
         pass
+
+    class Bounce:
+        def __init__(self, stdscr):
+            self.stdscr = stdscr
+
+        def __enter__(self):
+            self.y, self.x = self.stdscr.getyx()
+
+        def __exit__(self):
+            self.stdscr.move(self.y, self.x)
 
     KEYBINDINGS = {
             'quit': set([ord('q')]),
@@ -74,7 +86,6 @@ class Cali:
             curses.endwin()
 
     def mainloop(self):
-        pass
         self.displaycal()
         self.displayevents()
         try:
@@ -92,57 +103,47 @@ class Cali:
         self.displaydays()
         self.stdscr.refresh()
 
-#   def displaydays
-#       counter = (first - first.wday)
-#       before_month = true
-#       after_month = false
-#       while not after_month
-#           if counter.month == @today.month and before_month
-#               before_month = false
-#           elsif counter.month != @today.month and not before_month
-#               after_month = true
-#           end
-#           if before_month or after_month
-#               Ncurses.printw("   ")
-#               Ncurses.printw("\n") if after_month
-#           else
-#               @days[counter.day] = [Ncurses.getcurx(Ncurses.stdscr),
-#                   Ncurses.getcury(Ncurses.stdscr)]
-#               if counter == @today
-#                   x,y = Ncurses.getcurx(Ncurses.stdscr),Ncurses.getcury(Ncurses.stdscr)
-#               end
-#               Ncurses.attron(Ncurses::A_UNDERLINE) if has_items?(counter)
-#               Ncurses.attron(Ncurses::A_REVERSE) if counter == @today
-#               Ncurses.printw("%2d" % counter.day)
-#               Ncurses.attroff(Ncurses::A_REVERSE) if counter == @today
-#               Ncurses.attroff(Ncurses::A_UNDERLINE) if has_items?(counter)
-#               Ncurses.printw(" ")
-#           end
-#           if counter.wday == 6
-#               Ncurses.printw("\n")
-#           end
-#           counter += 1
-#       end
-#       Ncurses.move(y,x+1)
-#   end
+    def displaydays(self):
+        counter = (self.first() - self.first().isoweekday())
+        before_month = True
+        after_month = False
+        while not after_month:
+            if counter.month == self.today.month and before_month:
+                before_month = False
+            elif counter.month != self.today.month and not before_month:
+                after_month = True
+            if before_month or after_month:
+                self.stdscr.addstr("   ")
+                if after_month:
+                    self.stdscr.addstr("\n")
+            else:
+                self.days[counter.day] = self.stdscr.getyx()
+                if counter == self.today:
+                    y,x = self.stdscr.getyx()
+                if self.has_items(counter):
+                    self.stdscr.attron(curses.A_UNDERLINE)
+                if counter == self.today:
+                    self.stdscr.attron(curses.A_REVERSE)
+                self.stdscr.addstr("%2d" % counter.day)
+                if counter == self.today:
+                    self.stdscr.attroff(curses.A_REVERSE)
+                if self.has_items(counter):
+                    self.stdscr.attroff(curses.A_UNDERLINE)
+                self.stdscr.addstr(" ")
+            if counter.isoweekday() == 6:
+                self.stdscr.addstr("\n")
+            counter += 1
+        self.stdscr.move(y,x+1)
 
-#   def displayevents
-#       displaycal
-#       bounce {
-#           y = @days[last.day][1]
-#           @dates[@today].each {|l|
-#               y += 2
-#               Ncurses.move(y,0)
-#               Ncurses.printw("#{l}")
-#           } if @dates[@today]
-#       }
-#   end
-
-#   def bounce (&block)
-#       y,x = Ncurses.getcury(Ncurses.stdscr),Ncurses.getcurx(Ncurses.stdscr)
-#       yield
-#       Ncurses.move(y,x)
-#   end
+    def displayevents(self):
+        self.displaycal()
+        if self.dates[self.today]:
+            with self.Bounce(self.stdscr):
+                y = self.days[last.day][1]
+                for l in self.dates[self.today]:
+                    y += 2
+                    self.stdscr.move(y,0)
+                    self.stdscr.addstr(l)
 
 #   def movecursor(old)
 #       if old != @today
