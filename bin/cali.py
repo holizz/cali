@@ -215,30 +215,30 @@ class Cali:
         @update
         def prevweek(self):
             self.cali.today -= datetime.timedelta(7)
+        @update
         def nextmonth(self):
             oldtoday = self.cali.today
             self.cali.today += datetime.timedelta(4*7)
             if self.cali.today.month == oldtoday.month:
                 self.cali.today += datetime.timedelta(7)
-            self.cali.displaycal()
+        @update
         def prevmonth(self):
             oldtoday = self.cali.today
             self.cali.today -= datetime.timedelta(4*7)
             if self.cali.today.month == oldtoday.month:
                 self.cali.today -= datetime.timedelta(7)
-            self.cali.displaycal()
+        @update
         def nextyear(self):
             oldtoday = self.cali.today
             self.cali.today += datetime.timedelta(52*7)
             while self.cali.today.year == oldtoday.year or self.cali.today.month != oldtoday.month:
                 self.cali.today += datetime.timedelta(7)
-            self.cali.displaycal()
+        @update
         def prevyear(self):
             oldtoday = self.cali.today
             self.cali.today -= datetime.timedelta(52*7)
             while self.cali.today.year == oldtoday.year or self.cali.today.month != oldtoday.month:
                 self.cali.today -= datetime.timedelta(7)
-            self.cali.displaycal()
         @update
         def nextevent(self):
             for d in sorted(self.cali.dates.keys()):
@@ -251,6 +251,7 @@ class Cali:
                 if d < self.cali.today:
                     self.cali.today = d
                     break
+
     def move(self, to):
         self.Actions(self).__getattribute__(to)()
         self.displayevents()
