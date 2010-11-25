@@ -17,6 +17,7 @@
 
 import curses
 import datetime
+import locale
 import os
 import re
 import sys
@@ -75,6 +76,11 @@ class Cali:
         self.load_config()
         if files:
             self.config['dates'] = files
+
+        lc_all = os.environ['LC_ALL'] if 'LC_ALL' in os.environ else 'C'
+        locale.setlocale(locale.LC_ALL, lc_all)
+        if 'LC_TIME' in os.environ:
+            locale.setlocale(locale.LC_TIME, os.environ['LC_TIME'])
 
         self.today = datetime.date.today()
         self.days = {}
