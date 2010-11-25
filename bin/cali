@@ -158,16 +158,7 @@ class Cali:
                 self.days[counter.day] = self.stdscr.getyx()
                 if counter == self.today:
                     y,x = self.stdscr.getyx()
-                if counter in self.dates:
-                    self.stdscr.attron(curses.A_UNDERLINE)
-                if counter == self.today:
-                    self.stdscr.attron(curses.A_REVERSE)
-                self.stdscr.addstr('%2d' % counter.day)
-                if counter == self.today:
-                    self.stdscr.attroff(curses.A_REVERSE)
-                if counter in self.dates:
-                    self.stdscr.attroff(curses.A_UNDERLINE)
-                self.stdscr.addstr(' ')
+                self.drawdate(counter)
             if counter.isoweekday() == 6:
                 self.stdscr.addstr('\n')
             counter += datetime.timedelta(1)
@@ -186,22 +177,24 @@ class Cali:
     def movecursor(self, old):
         if old != self.today:
             a = self.days[old.day]
-            if old in self.dates:
-                self.stdscr.attron(curses.A_UNDERLINE)
             self.stdscr.move(a[1], a[0])
-            self.stdscr.addstr('%2d' % old.day)
-            if old in self.dates:
-                self.stdscr.attroff(curses.A_UNDERLINE)
-        if self.today in self.dates:
-            self.stdscr.attron(curses.A_UNDERLINE)
-        self.stdscr.attron(curses.A_REVERSE)
-        a = self.days[self.today.day]
+            self.drawdate(old)
         self.stdscr.move(a[1], a[0])
-        self.stdscr.addstr('%2d' % self.today.day)
-        self.stdscr.attroff(curses.A_REVERSE)
-        if self.today in self.dates:
-            self.stdscr.attroff(curses.A_UNDERLINE)
+        self.drawdate(self.today)
+        a = self.days[self.today.day]
         self.stdscr.move(a[1], a[0]+1)
+
+    def drawdate(self, date):
+        if date in self.dates:
+            self.stdscr.attron(curses.A_UNDERLINE)
+        if date == self.today:
+            self.stdscr.attron(curses.A_REVERSE)
+        self.stdscr.addstr('%2d' % date.day)
+        if date == self.today:
+            self.stdscr.attroff(curses.A_REVERSE)
+        if date in self.dates:
+            self.stdscr.attroff(curses.A_UNDERLINE)
+        self.stdscr.addstr(' ')
 
     class Actions(object): # new-style class for 2.x
         def __init__(self, cali):
