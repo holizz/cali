@@ -34,6 +34,7 @@ def update(fn):
             self.cali.movecursor(oldtoday)
         else:
             self.cali.displaycal()
+        self.cali.displayevents()
     return a
 
 class Cali:
@@ -78,6 +79,7 @@ class Cali:
         self.today = datetime.date.today()
         self.days = {}
         self.dates = {}
+        self.events = []
 
         for date_file in self.config['dates']:
             with open(self.expandpath(date_file)) as f:
@@ -158,14 +160,21 @@ class Cali:
                 self.days[counter.day] = self.stdscr.getyx()
                 if counter == self.today:
                     y,x = self.stdscr.getyx()
-                self.drawdate(counter)
+                self.drawdate(counter, highlight=(counter==self.today))
             if counter.isoweekday() == 6:
                 self.stdscr.addstr('\n')
             counter += datetime.timedelta(1)
         self.stdscr.move(y,x+1)
 
     def displayevents(self):
-        self.displaycal()
+        with self.Bounce(self.stdscr):
+            y = self.days[self.last().day][0]
+            for e in self.events:
+                y += 2
+                self.stdscr.move(y,0)
+                self.stdscr.addstr(' '*e[1])
+
+        self.events = []
         if self.today in self.dates:
             with self.Bounce(self.stdscr):
                 y = self.days[self.last().day][0]
@@ -173,24 +182,25 @@ class Cali:
                     y += 2
                     self.stdscr.move(y,0)
                     self.stdscr.addstr(l)
+                    self.events.append(self.stdscr.getyx())
 
     def movecursor(self, old):
-        if old != self.today:
-            a = self.days[old.day]
-            self.stdscr.move(a[1], a[0])
-            self.drawdate(old)
-        self.stdscr.move(a[1], a[0])
-        self.drawdate(self.today)
-        a = self.days[self.today.day]
-        self.stdscr.move(a[1], a[0]+1)
+        a = self.days[old.day]
+        self.stdscr.move(a[0], a[1])
+        self.drawdate(old, highlight=False)
 
-    def drawdate(self, date):
+        a = self.days[self.today.day]
+        self.stdscr.move(a[0], a[1])
+        self.drawdate(self.today, highlight=True)
+        self.stdscr.move(a[0], a[1]+1)
+
+    def drawdate(self, date, highlight):
         if date in self.dates:
             self.stdscr.attron(curses.A_UNDERLINE)
-        if date == self.today:
+        if highlight:
             self.stdscr.attron(curses.A_REVERSE)
         self.stdscr.addstr('%2d' % date.day)
-        if date == self.today:
+        if highlight:
             self.stdscr.attroff(curses.A_REVERSE)
         if date in self.dates:
             self.stdscr.attroff(curses.A_UNDERLINE)
@@ -203,6 +213,7 @@ class Cali:
             raise Cali.Quit
         def refresh(self):
             self.cali.displaycal()
+            self.cali.displayevents()
         @update
         def tomorrow(self):
             self.cali.today += datetime.timedelta(1)
@@ -254,7 +265,6 @@ class Cali:
 
     def move(self, to):
         self.Actions(self).__getattribute__(to)()
-        self.displayevents()
 
     def weekdays(self):
         wds = []
