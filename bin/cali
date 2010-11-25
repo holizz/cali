@@ -137,9 +137,11 @@ class Cali:
     def displaycal(self):
         self.stdscr.clear()
         self.stdscr.move(0,0)
-        self.stdscr.addstr(self.today.strftime('   %B %Y\n'))
+        self.stdscr.addstr(self.today.strftime('   %B %Y'))
+        self.stdscr.move(1,0)
         
-        self.stdscr.addstr(' '.join(self.weekdays())+'\n')
+        self.stdscr.addstr(' '.join(self.weekdays()))
+        self.stdscr.move(2,0)
         self.displaydays()
         self.stdscr.refresh()
 
@@ -155,14 +157,14 @@ class Cali:
             if before_month or after_month:
                 self.stdscr.addstr('   ')
                 if after_month:
-                    self.stdscr.addstr('\n')
+                    self.stdscr.move(self.stdscr.getyx()[0]+1, 0)
             else:
                 self.days[counter.day] = self.stdscr.getyx()
                 if counter == self.today:
                     y,x = self.stdscr.getyx()
                 self.drawdate(counter, highlight=(counter==self.today))
             if counter.isoweekday() == 6:
-                self.stdscr.addstr('\n')
+                self.stdscr.move(self.stdscr.getyx()[0]+1, 0)
             counter += datetime.timedelta(1)
         self.stdscr.move(y,x+1)
 
