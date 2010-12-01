@@ -50,3 +50,7 @@ Interactive cal(1) (but the name ical was taken)
 [Next/previous event] w/b (this navigates between underlined days)
 [Quit]                q
 [Refresh]             ^L (Ctrl-L)
+
+== Bugs
+
+- Mojibake under Python 2. Non-ASCII characters work fine under Python 3
