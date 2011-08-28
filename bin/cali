@@ -1,298 +1,365 @@
-#!/usr/bin/env python
-# encoding: utf-8
+#!/usr/bin/env node
+// vi: ft=javascript
 
-# Copyright © 2008-2010, Tom Adams
-#
-# Permission to use, copy, modify, and/or distribute this software for any
-# purpose with or without fee is hereby granted, provided that the above
-# copyright notice and this permission notice appear in all copies.
-#
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-# PERFORMANCE OF THIS SOFTWARE.
+/*
+ * Copyright © 2008-2011, Tom Adams
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR
+ * BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
+ * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */
 
-import curses
-import datetime
-import locale
-import os
-import re
-import sys
+var ncurses, Cali, moveCmd;
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+ncurses = require('ncurses');
 
-def update(fn):
-    def a(self):
-        oldtoday = self.cali.today
-        fn(self)
-        if oldtoday.month == self.cali.today.month and oldtoday.year == self.cali.today.year:
-            self.cali.movecursor(oldtoday)
-        else:
-            self.cali.displaycal()
-        self.cali.displayevents()
-    return a
+//try:
+//    import configparser
+//except ImportError:
+//    import ConfigParser as configparser
 
-class Cali:
+Cali = function () {
+  this.__init__.apply(this,arguments)
+}
 
-    # Signal
-    class Quit(BaseException):
-        pass
+/***
+ * Exceptions
+ ***/
 
-    class Bounce:
-        def __init__(self, stdscr):
-            self.stdscr = stdscr
+Cali.prototype.Quit = function() {
+}
 
-        def __enter__(self):
-            self.y, self.x = self.stdscr.getyx()
+/***
+ * Decorators and utility functions
+ ***/
 
-        def __exit__(self, cls, value, traceback):
-            self.stdscr.move(self.y, self.x)
+Cali.prototype.util = {}
 
-    KEYBINDINGS = {
-            'quit': set([ord('q')]),
-            'refresh': set([12]), # C-l
-            'tomorrow': set([ord('l'), curses.KEY_RIGHT, 6]), # C-f
-            'yesterday': set([ord('h'), curses.KEY_LEFT, 2]), # C-b
-            'nextweek': set([ord('j'), curses.KEY_DOWN, 14]), # C-n
-            'prevweek': set([ord('k'), curses.KEY_UP, 16]), # C-p
-            'nextmonth': set([ord('n'), curses.KEY_NPAGE]),
-            'prevmonth': set([ord('p'), curses.KEY_PPAGE]),
-            'nextyear': set([ord('}')]),
-            'prevyear': set([ord('{')]),
-            'nextevent': set([ord('w')]),
-            'prevevent': set([ord('b')])
-            }
+Cali.prototype.util.update = function(fn) {
+  return function() {
+    var oldtoday = this.cali.today
+    fn.call(this)
+    if (oldtoday.month === this.cali.today.month && oldtoday.year === this.cali.today.year)
+      this.cali.movecursor(oldtoday)
+    else
+      this.cali.displaycal()
+    this.cali.displayevents()
+  }
+}
 
-    CONFIG_FILE = '$XDG_CONFIG_HOME/cali/config'
+//TODO: may need to change this to decorator style like update
+Cali.prototype.util.bounce = function(stdscr, fn) {
+  var y = stdscr.getyx()[0],
+      x = stdscr.getyx()[1]
 
-    def __init__(self, files=[]):
-        self.config = {'dates': []}
-        self.load_config()
-        if files:
-            self.config['dates'] = files
+  fn()
 
-        lc_all = os.environ['LC_ALL'] if 'LC_ALL' in os.environ else 'C'
-        locale.setlocale(locale.LC_ALL, lc_all)
-        if 'LC_TIME' in os.environ:
-            locale.setlocale(locale.LC_TIME, os.environ['LC_TIME'])
+  stdscr.move(y, x)
+}
 
-        self.today = datetime.date.today()
-        self.days = {}
-        self.dates = {}
-        self.events = []
+/***
+ * Main methods
+ ***/
 
-        for date_file in self.config['dates']:
-            with open(self.expandpath(date_file)) as f:
-                for l in f.readlines():
-                    line = l.strip()
-                    d = re.match('(\d{4})-(\d{2})-(\d{2})', line)
-                    if d:
-                        date = datetime.date(*[int(x) for x in d.groups()])
-                        self.dates.setdefault(date, [])
-                        self.dates[date].append(line)
+Cali.prototype.__init__ = function(files) {
+  if (files === undefined)
+    files = []
 
-        self.key = {}
-        for v,k in self.KEYBINDINGS.items():
-            for kk in k:
-                self.key[kk] = v
+  this.KEYBINDINGS = {
+    quit:      ['q'],
+    refresh:   [12],                        // C-l
+    tomorrow:  ['l', ncurses.keys.RIGHT, 6], // C-f
+    yesterday: ['h', ncurses.keys.LEFT,  2], // C-b
+    nextweek:  ['j', ncurses.keys.DOWN, 14], // C-n
+    prevweek:  ['k', ncurses.keys.UP,   16], // C-p
+    nextmonth: ['n', ncurses.keys.NPAGE],
+    prevmonth: ['p', ncurses.keys.PPAGE],
+    nextyear:  ['}'],
+    prevyear:  ['{'],
+    nextevent: ['w'],
+    prevevent: ['b']
+  }
 
-    def load_config(self):
-        if os.path.exists(self.expandpath(self.CONFIG_FILE)):
-            cfg = configparser.ConfigParser()
-            cfg.read(self.expandpath(self.CONFIG_FILE))
-            if 'dates' in cfg.defaults():
-                d = cfg.defaults()['dates']
-                if d:
-                    self.config['dates'] = [d]
+  this.CONFIG_FILE = '$XDG_CONFIG_HOME/cali/config'
 
-    def expandpath(self, p):
-        if 'XDG_CONFIG_HOME' not in os.environ:
-            os.environ['XDG_CONFIG_HOME'] = '~/.config'
-        return os.path.expanduser(os.path.expandvars(p))
+  this.config = {dates: []}
+  this.load_config()
+  if (files.length)
+    this.config['dates'] = files
 
-    def run(self):
-        try:
-            self.stdscr = curses.initscr()
-            curses.cbreak()
-            curses.noecho()
-            self.stdscr.keypad(1)
-            self.mainloop()
-        finally:
-            curses.nocbreak()
-            self.stdscr.keypad(0)
-            curses.echo()
-            curses.endwin()
+  //lc_all = os.environ['LC_ALL'] if 'LC_ALL' in os.environ else 'C'
+  //locale.setlocale(locale.LC_ALL, lc_all)
+  //if 'LC_TIME' in os.environ:
+  //    locale.setlocale(locale.LC_TIME, os.environ['LC_TIME'])
 
-    def mainloop(self):
-        self.displaycal()
-        self.displayevents()
-        try:
-            while True:
-                c = self.stdscr.getch()
-                if c in self.key:
-                    self.move(self.key[c])
-        except self.Quit:
-            pass
+  this.today = new Date
+  this.days = {}
+  this.dates = {}
+  this.events = []
 
-    def displaycal(self):
-        self.stdscr.clear()
-        self.stdscr.move(0,0)
-        self.stdscr.addstr(self.today.strftime('   %B %Y'))
-        self.stdscr.move(1,0)
-        
-        self.stdscr.addstr(' '.join(self.weekdays()))
-        self.stdscr.move(2,0)
-        self.displaydays()
-        self.stdscr.refresh()
+  //for (var date_file in this.config['dates']) {
+  //    with open(this.expandpath(date_file)) as f:
+  //        for var l in f.readlines():
+  //            line = l.strip()
+  //            d = re.match('(\d{4})-(\d{2})-(\d{2})', line)
+  //            if d:
+  //                date = datetime.date(*[int(x) for x in d.groups()])
+  //                this.dates.setdefault(date, [])
+  //                this.dates[date].append(line)
+  //}
 
-    def displaydays(self):
-        counter = self.first() - datetime.timedelta(self.first().isoweekday())
-        before_month = True
-        after_month = False
-        while not after_month:
-            if counter.month == self.today.month and before_month:
-                before_month = False
-            elif counter.month != self.today.month and not before_month:
-                after_month = True
-            if before_month or after_month:
-                self.stdscr.addstr('   ')
-                if after_month:
-                    self.stdscr.move(self.stdscr.getyx()[0]+1, 0)
-            else:
-                self.days[counter.day] = self.stdscr.getyx()
-                if counter == self.today:
-                    y,x = self.stdscr.getyx()
-                self.drawdate(counter, highlight=(counter==self.today))
-            if counter.isoweekday() == 6:
-                self.stdscr.move(self.stdscr.getyx()[0]+1, 0)
-            counter += datetime.timedelta(1)
-        self.stdscr.move(y,x+1)
+  this.key = {}
+  for (var v in this.KEYBINDINGS) {
+    var k = this.KEYBINDINGS[v]
+    for (var kk in k)
+      this.key[kk] = v
+  }
+}
 
-    def displayevents(self):
-        with self.Bounce(self.stdscr):
-            y = self.days[self.last().day][0]
-            for e in self.events:
-                y += 2
-                self.stdscr.move(y,0)
-                self.stdscr.addstr(' '*e[1])
+//    def load_config(self):
+//        if os.path.exists(self.expandpath(self.CONFIG_FILE)):
+//            cfg = configparser.ConfigParser()
+//            cfg.read(self.expandpath(self.CONFIG_FILE))
+//            if 'dates' in cfg.defaults():
+//                d = cfg.defaults()['dates']
+//                if d:
+//                    self.config['dates'] = [d]
 
-        self.events = []
-        if self.today in self.dates:
-            with self.Bounce(self.stdscr):
-                y = self.days[self.last().day][0]
-                for l in self.dates[self.today]:
-                    y += 2
-                    self.stdscr.move(y,0)
-                    self.stdscr.addstr(l)
-                    self.events.append(self.stdscr.getyx())
+//    def expandpath(self, p):
+//        if 'XDG_CONFIG_HOME' not in os.environ:
+//            os.environ['XDG_CONFIG_HOME'] = '~/.config'
+//        return os.path.expanduser(os.path.expandvars(p))
 
-    def movecursor(self, old):
-        a = self.days[old.day]
-        self.stdscr.move(a[0], a[1])
-        self.drawdate(old, highlight=False)
+Cali.prototype.run = function() {
+  try {
+    this.stdscr = ncurses.initscr()
+    ncurses.cbreak()
+    ncurses.noecho()
+    this.stdscr.keypad(1)
+    this.mainloop()
+  } finally {
+    ncurses.nocbreak()
+    this.stdscr.keypad(0)
+    ncurses.echo()
+    ncurses.endwin()
+  }
+}
 
-        a = self.days[self.today.day]
-        self.stdscr.move(a[0], a[1])
-        self.drawdate(self.today, highlight=True)
-        self.stdscr.move(a[0], a[1]+1)
+Cali.prototype.mainloop = function() {
+  this.displaycal()
+  this.displayevents()
+  try {
+    while (true) {
+      var c = this.stdscr.getch()
+      if (c in this.key)
+        this.move(this.key[c])
+    }
+  } catch (e) {
+    if (typeof e !== this.Quit)
+      throw e
+  }
+}
 
-    def drawdate(self, date, highlight):
-        if date in self.dates:
-            self.stdscr.attron(curses.A_UNDERLINE)
-        if highlight:
-            self.stdscr.attron(curses.A_REVERSE)
-        self.stdscr.addstr('%2d' % date.day)
-        if highlight:
-            self.stdscr.attroff(curses.A_REVERSE)
-        if date in self.dates:
-            self.stdscr.attroff(curses.A_UNDERLINE)
-        self.stdscr.addstr(' ')
+Cali.prototype.displaycal = function() {
+  this.stdscr.clear()
+  this.stdscr.move(0,0)
+  this.stdscr.addstr(strftime.strftime('   %B %Y', this.today))
+  this.stdscr.move(1,0)
 
-    class Actions(object): # new-style class for 2.x
-        def __init__(self, cali):
-            self.cali = cali
-        def quit(self):
-            raise Cali.Quit
-        def refresh(self):
-            self.cali.displaycal()
-            self.cali.displayevents()
-        @update
-        def tomorrow(self):
-            self.cali.today += datetime.timedelta(1)
-        @update
-        def yesterday(self):
-            self.cali.today -= datetime.timedelta(1)
-        @update
-        def nextweek(self):
-            self.cali.today += datetime.timedelta(7)
-        @update
-        def prevweek(self):
-            self.cali.today -= datetime.timedelta(7)
-        @update
-        def nextmonth(self):
-            oldtoday = self.cali.today
-            self.cali.today += datetime.timedelta(4*7)
-            if self.cali.today.month == oldtoday.month:
-                self.cali.today += datetime.timedelta(7)
-        @update
-        def prevmonth(self):
-            oldtoday = self.cali.today
-            self.cali.today -= datetime.timedelta(4*7)
-            if self.cali.today.month == oldtoday.month:
-                self.cali.today -= datetime.timedelta(7)
-        @update
-        def nextyear(self):
-            oldtoday = self.cali.today
-            self.cali.today += datetime.timedelta(52*7)
-            while self.cali.today.year == oldtoday.year or self.cali.today.month != oldtoday.month:
-                self.cali.today += datetime.timedelta(7)
-        @update
-        def prevyear(self):
-            oldtoday = self.cali.today
-            self.cali.today -= datetime.timedelta(52*7)
-            while self.cali.today.year == oldtoday.year or self.cali.today.month != oldtoday.month:
-                self.cali.today -= datetime.timedelta(7)
-        @update
-        def nextevent(self):
-            for d in sorted(self.cali.dates.keys()):
-                if d > self.cali.today:
-                    self.cali.today = d
-                    break
-        @update
-        def prevevent(self):
-            for d in reversed(sorted(self.cali.dates.keys())):
-                if d < self.cali.today:
-                    self.cali.today = d
-                    break
+  this.stdscr.addstr(this.weekdays().join(' '))
+  this.stdscr.move(2,0)
+  this.displaydays()
+  this.stdscr.refresh()
+}
 
-    def move(self, to):
-        self.Actions(self).__getattribute__(to)()
+Cali.prototype.displaydays = function() {
+  var counter = this.first() - datetime.timedelta(this.first().getDay()),
+      before_month = true,
+      after_month = false
 
-    def weekdays(self):
-        wds = []
-        counter = self.today - datetime.timedelta(self.today.isoweekday())
-        n = 0
-        while n < 7:
-            #TODO: handle widechars correctly
-            wds.append(counter.strftime('%a')[0:2])
-            counter += datetime.timedelta(1)
-            n += 1
-        return wds
+  while (!after_month) {
+    if (counter.month === this.today.month && before_month)
+      before_month = False
+    else if (counter.month !== this.today.month && !before_month)
+      after_month = True
 
-    def first(self):
-        return datetime.date(self.today.year, self.today.month, 1)
+    if (before_month || after_month) {
+      this.stdscr.addstr('   ')
+      if (after_month)
+        this.stdscr.move(this.stdscr.getyx()[0]+1, 0)
+    } else {
+      this.days[counter.day] = this.stdscr.getyx()
+      if (counter === this.today)
+        var y = this.stdscr.getyx()[0], x = this.stdscr.getyx()[1]
+      this.drawdate(counter, highlight=(counter==this.today))
+    }
 
-    def last(self):
-        newlast = self.today
-        while newlast.month == self.today.month:
-            last = newlast
-            newlast += datetime.timedelta(1)
-        return last
+    if (counter.isoweekday() === 6)
+      this.stdscr.move(this.stdscr.getyx()[0]+1, 0)
+    counter += datetime.timedelta(1)
+  }
 
-Cali(sys.argv[1:]).run()
+  this.stdscr.move(y,x+1)
+}
+
+Cali.prototype.displayevents = function() {
+  this.bounce(this.stdscr, function() {
+    var y = this.days[this.last().day][0]
+    for (var e in this.events) {
+      y += 2
+      this.stdscr.move(y,0)
+      this.stdscr.addstr(' '*e[1])
+    }
+  })
+
+  this.events = []
+  if (this.today in this.dates) {
+    this.bounce(this.stdscr, function() {
+      var y = this.days[this.last().day][0]
+      for (var l in this.dates[this.today]) {
+        y += 2
+        this.stdscr.move(y,0)
+        this.stdscr.addstr(l)
+        this.events.append(this.stdscr.getyx())
+      }
+    })
+  }
+}
+
+Cali.prototype.movecursor = function(old) {
+  var a = this.days[old.day]
+  this.stdscr.move(a[0], a[1])
+  this.drawdate(old, highlight=False)
+
+  a = this.days[this.today.day]
+  this.stdscr.move(a[0], a[1])
+  this.drawdate(this.today, highlight=True)
+  this.stdscr.move(a[0], a[1]+1)
+}
+
+Cali.prototype.drawdate = function(date, highlight) {
+  if (date in this.dates)
+    this.stdscr.attron(ncurses.attrs.UNDERLINE)
+  if (highlight)
+    this.stdscr.attron(ncurses.attrs.REVERSE)
+  this.stdscr.addstr('%2d' % date.day)
+  if (highlight)
+    this.stdscr.attroff(ncurses.attrs.REVERSE)
+  if (date in this.dates)
+    this.stdscr.attroff(ncurses.attrs.UNDERLINE)
+  this.stdscr.addstr(' ')
+}
+
+Cali.prototype.move = function(to) {
+  this.Actions(this).__getattribute__(to)()
+}
+
+Cali.prototype.weekdays = function() {
+  var wds = [],
+      counter = this.today - datetime.timedelta(this.today.isoweekday()),
+      n = 0
+  while (n < 7) {
+    //TODO: handle widechars correctly
+    wds.append(counter.strftime('%a').slice(0,2))
+    counter += datetime.timedelta(1)
+    n += 1
+  }
+  return wds
+}
+
+Cali.prototype.first = function() {
+  return datetime.date(this.today.year, this.today.month, 1)
+}
+
+Cali.prototype.last = function() {
+  var newlast = this.today,
+      last
+  while (newlast.month === this.today.month)
+    last = newlast
+    newlast += datetime.timedelta(1)
+  return last
+}
+
+/***
+ * Actions
+ ***/
+
+Cali.prototype.Actions = function() {
+  this.__init__.apply(this, arguments)
+}
+
+Cali.prototype.Actions.prototype.__init__ = function(cali) {
+  this.cali = cali
+}
+
+Cali.prototype.Actions.prototype.quit = function() {
+  throw this.cali.Quit
+}
+
+Cali.prototype.Actions.prototype.refresh = function() {
+  this.cali.displaycal()
+  this.cali.displayevents()
+}
+
+/***
+ * Movement commands
+ ***/
+
+moveCmd = {
+  tomorrow: function() { this.cali.today += datetime.timedelta(1) },
+  yesterday: function() { this.cali.today -= datetime.timedelta(1) },
+  nextweek: function() { this.cali.today += datetime.timedelta(7) },
+  prevweek: function() { this.cali.today -= datetime.timedelta(7) },
+  nextmonth: function() {
+    var oldtoday = this.cali.today
+    this.cali.today += datetime.timedelta(4*7)
+    if (this.cali.today.month === oldtoday.month)
+      this.cali.today += datetime.timedelta(7)
+  },
+  prevmonth: function() {
+    var oldtoday = this.cali.today
+    this.cali.today -= datetime.timedelta(4*7)
+    if (this.cali.today.month === oldtoday.month)
+      this.cali.today -= datetime.timedelta(7)
+  },
+  nextyear: function() {
+    var oldtoday = this.cali.today
+    this.cali.today += datetime.timedelta(52*7)
+    while (this.cali.today.year === oldtoday.year || this.cali.today.month != oldtoday.month)
+      this.cali.today += datetime.timedelta(7)
+  },
+  prevyear: function() {
+    var oldtoday = this.cali.today
+    this.cali.today -= datetime.timedelta(52*7)
+    while (this.cali.today.year === oldtoday.year || this.cali.today.month != oldtoday.month)
+      this.cali.today -= datetime.timedelta(7)
+  },
+  nextevent: function() {
+    for (var d in sorted(this.cali.dates.keys()))
+      if (d > this.cali.today) {
+        this.cali.today = d
+        break
+      }
+  },
+  prevevent: function() {
+    for (var d in reversed(sorted(this.cali.dates.keys())))
+      if (d < this.cali.today) {
+        this.cali.today = d
+        break
+      }
+  },
+}
+
+for (var name in moveCmd)
+  Cali.prototype.Actions.prototype[name] = Cali.prototype.util.update(moveCmd[name])
+
+new Cali(process.argv.slice(1)).run()
